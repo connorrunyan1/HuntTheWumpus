@@ -6,7 +6,7 @@ import com.tkc.huntthewumpus.HuntTheWumpusGame;
 
 public class DesktopLauncher {
 	public static void main (String[] arg) {
-		final int gameWidth= 1600;
+		final int gameWidth= 1600; // TODO fix
 		final int gameHeight= 900;
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 		config.width = gameWidth;

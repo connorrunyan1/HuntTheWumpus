@@ -13,6 +13,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.tkc.huntthewumpus.Entities.Arrow;
 import com.tkc.huntthewumpus.Entities.Entity;
+import com.tkc.huntthewumpus.Entities.OtherPlayer;
 import com.tkc.huntthewumpus.Entities.Player;
 import com.tkc.huntthewumpus.NetworkController;
 
@@ -26,11 +27,12 @@ import java.util.TreeMap;
 
 // This is the class that keeps track of the state of the level. It will also act as the controller,
 // processing input and updating accordingly.
-public class LevelModel implements Observer{
+public class LevelModel {
     // brainstorm, what does a level need?
     // metadata: width, height, name, progression stats(wave etc)
     OrthographicCamera camera;
     OrthographicCamera hudCamera;
+    NetworkController networkController;
     // the actual background map
     // TODO for now background is an image
     Sprite background;
@@ -39,11 +41,12 @@ public class LevelModel implements Observer{
     // current player
     private Player player;
     private GlyphLayout username;
+    private String usernameAsString;
     float arrowCharge = 0;
     float oldCharge = 0;
     boolean arrowCharging = false;
     // list of OTHER players
-    private TreeMap<String, Player> players;
+    private TreeMap<String, OtherPlayer> players;
     // list of wumpuses
     private ArrayList<Entity> wumpuses;
     // list of projectiles
@@ -55,7 +58,6 @@ public class LevelModel implements Observer{
 
     // constructor that takes the level name.  name prefixed by mode? ie survival_oasis
     public LevelModel(String levelName, String name) {
-        NetworkController nc = new NetworkController();
         font = new BitmapFont();
         camera = new OrthographicCamera(1600, 900);
         hudCamera = new OrthographicCamera(1600, 900);
@@ -65,10 +67,11 @@ public class LevelModel implements Observer{
         background.setScale(2.0f, 2.0f);
         // TODO might want to remove this part? idk
         player = new Player(name, 0, 0);
-        players = new TreeMap<String, Player>();
+        players = new TreeMap<String, OtherPlayer>();
         wumpuses = new ArrayList<Entity>();
         projectiles = new ArrayList<Entity>();
         batch = new SpriteBatch();
+        networkController = new NetworkController(this);
     }
 
     public void update(float dt) {
@@ -93,6 +96,7 @@ public class LevelModel implements Observer{
                 oldCharge = 0;
             }
         }
+
         for (String id : players.keySet()) {
             players.get(id).update(dt);
         }
@@ -167,46 +171,21 @@ public class LevelModel implements Observer{
     }
 
     public void setUsername(String usernames){
+        usernameAsString = usernames;
         username = new GlyphLayout(font, usernames);
     }
 
-
-    public void addOtherPlayer(JSONObject otherPlayer){
-        String username = "";
-        String id = "";
-        float x = 0;
-        float y = 0;
-        try{
-            id = (String) otherPlayer.get("id");
-            username = (String) otherPlayer.get("username");
-            x = (Float) otherPlayer.get("xPos");
-            y = (Float) otherPlayer.get("yPos");
-        } catch (JSONException e){
-            Gdx.app.log("LevelModel", "Error reading other player");
-        }
-
-        Player newPlayer = new Player(username, x, y);
-        newPlayer.setOther();
-        players.put(id, newPlayer);
+    public String getUsername(){
+        return usernameAsString;
     }
 
-    public void updateOtherPlayer(JSONObject otherPlayer){
-        String username = "";
-        float x = 0;
-        float y = 0;
-        try{
-            username = (String) otherPlayer.get("username");
-            x = (Float) otherPlayer.get("xPos");
-            y = (Float) otherPlayer.get("yPos");
-        } catch (JSONException e){
-            Gdx.app.log("LevelModel", "Error reading other player");
-        }
-
+    public void addOtherPlayer(String id, String username, String skin, float x, float y){
+        OtherPlayer p = new OtherPlayer(id, username, skin, x, y);
+        players.put(id, p);
     }
 
-    // method called by network controller when it has an update for us
-    @Override
-    public void update(Observable o, Object arg) {
-
+    public void addOtherPlayer(String id, float x, float y){
+        OtherPlayer p = new OtherPlayer(id, x, y);
+        players.put(id, p);
     }
 }

@@ -3,7 +3,6 @@ var server = require('http').Server(app);
 var io = require('socket.io')(server);
 
 var players = [];
-var arrows = [];
 
 server.listen(8080, function(){
   console.log("Server is now running. . .");
@@ -18,29 +17,14 @@ io.on('connection', function(socket){
   console.log("Player Connected with ID: " + socket.id);
   // let the other players know this player connected
   socket.broadcast.emit('playerConnected', player);
-        // give this new socket the current other players info
-        socket.emit('getPlayers', players);
-        socket.emit('getArrows', arrows);
+  // give this new socket the current other players info
+  socket.emit('getPlayers', players);
         // put this player in our array for others
-        players.push(player);
-  socket.on('finishConnection', function(data){
-  });
-
+  players.push(player);
 
   // when this socket changes it's position, let the others know
   socket.on('positionUpdate', function(positionUpdateData){
     socket.broadcast.emit('positionUpdated', positionUpdateData);
-  });
-
-  // when this socket fires an arrow, let the others know
-  socket.on('firingArrow', function(arrowFiredData){
-    socket.broadcast.emit('arrowFired', arrowFiredData);
-    // also put arrow into the array
-    var x = arrowFiredData.x;
-    var y = arrowFiredData.y;
-    var direction = arrowFiredData.direction;
-    var velocity = arrowFiredData.velocity;
-    arrows.push(new arrow(x, y, direction, velocity));
   });
 
   // when this socket disconnects
@@ -57,17 +41,8 @@ io.on('connection', function(socket){
   });
 });
 
-function player(username, socket, skin, x, y){
-    this.socket = socket;
+function player(id, x, y){
+    this.id = id;
     this.x = x;
     this.y = y;
-    this.username = username;
-    this.skin = skin;
-}
-
-function arrow(x, y, direction, velocity){
-    this.x = x;
-    this.y = y;
-    this.direction = direction;
-    this.velocity = velocity;
 }
