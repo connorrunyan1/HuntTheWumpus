@@ -11,11 +11,13 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.squareup.okhttp.internal.Util;
 import com.tkc.huntthewumpus.Entities.Arrow;
 import com.tkc.huntthewumpus.Entities.Entity;
 import com.tkc.huntthewumpus.Entities.OtherPlayer;
 import com.tkc.huntthewumpus.Entities.Player;
 import com.tkc.huntthewumpus.NetworkController;
+import com.tkc.huntthewumpus.Utility;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,11 +27,14 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.TreeMap;
 
+import javax.print.attribute.standard.MediaSize;
+
 // This is the class that keeps track of the state of the level. It will also act as the controller,
 // processing input and updating accordingly.
 public class LevelModel {
     // brainstorm, what does a level need?
     // metadata: width, height, name, progression stats(wave etc)
+    private Utility util;
     OrthographicCamera camera;
     OrthographicCamera hudCamera;
     NetworkController networkController;
@@ -58,6 +63,7 @@ public class LevelModel {
 
     // constructor that takes the level name.  name prefixed by mode? ie survival_oasis
     public LevelModel(String levelName, String name) {
+        util = new Utility();
         font = new BitmapFont();
         camera = new OrthographicCamera(1600, 900);
         hudCamera = new OrthographicCamera(1600, 900);
@@ -74,7 +80,10 @@ public class LevelModel {
         networkController = new NetworkController(this);
     }
 
+    float networkDelay =0.1f; // update each tehnth second
+
     public void update(float dt) {
+        networkDelay-= dt;
         // TODO Check user controls and update their player accordingly
         if(player != null){
             player.update(dt);
@@ -117,6 +126,10 @@ public class LevelModel {
         cameraPosition.y = cameraPosition.y + (0.02f+dt)*(playerPosition.y - cameraPosition.y);
         camera.position.set(cameraPosition.x, cameraPosition.y, 1);
         camera.update();
+        if(networkDelay < 0){
+            networkDelay = 0.1f; // tenth a second
+            networkController.updateServer(playerPosition.x, playerPosition.y);
+        }
     }
 
     public void draw(float dt) {
@@ -185,7 +198,13 @@ public class LevelModel {
     }
 
     public void addOtherPlayer(String id, float x, float y){
-        OtherPlayer p = new OtherPlayer(id, x, y);
+        OtherPlayer p = new OtherPlayer(id, x, y, util);
         players.put(id, p);
+    }
+
+    public void updatePlayer(String id, float x, float y){
+        OtherPlayer p = players.get(id);
+        p.setPosition(x,y);
+        Gdx.app.log("levelModel", "level model updating player");
     }
 }

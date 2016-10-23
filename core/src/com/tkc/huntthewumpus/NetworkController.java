@@ -24,20 +24,19 @@ public class NetworkController {
     private Socket socket;
     private LevelModel level; // grab a reference to which level model we're updating
 
-    public NetworkController(LevelModel level)
-    {
+    public NetworkController(LevelModel level) {
         this.level = level;
         username = level.getUsername();
         connectSocket();
     }
 
-    public void connectSocket(){
-        try{
+    public void connectSocket() {
+        try {
             socket = IO.socket("http://52.35.157.112:8080");
             socket.connect();
             configSocketEvents();
-        }catch (Exception e){
-            Gdx.app.log(TAG, ""+e);
+        } catch (Exception e) {
+            Gdx.app.log(TAG, "" + e);
         }
     }
 
@@ -72,13 +71,8 @@ public class NetworkController {
             public void call(Object... args) {
                 JSONObject data = (JSONObject) args[0];
                 try {
-
                     String id = data.getString("id");
-                    String username = data.getString("username");
-                    String skin = data.getString("skin");
-                    double x = data.getDouble("x");
-                    double y = data.getDouble("y");
-                    level.addOtherPlayer(id, username, skin, (float) x, (float) y);
+                    level.addOtherPlayer(id, 0, 0);
                     Gdx.app.log(TAG, "New Player Connected with ID: " + id);
                 } catch (JSONException e) {
                     Gdx.app.log(TAG, "Error Getting New Player ID");
@@ -104,26 +98,26 @@ public class NetworkController {
         */
 
         // when the server sends you whole game player state
-        socket.on("getPlayers", new Emitter.Listener(){
+        socket.on("getPlayers", new Emitter.Listener() {
             @Override
             public void call(Object... args) {
                 JSONArray objects = (JSONArray) args[0];
-                try{
-                    for(int i = 0; i < objects.length(); i++){
+                try {
+                    for (int i = 0; i < objects.length(); i++) {
                         String id = objects.getJSONObject(i).getString("id");
                         double xPos = objects.getJSONObject(i).getDouble("x");
-                        double yPos =objects.getJSONObject(i).getDouble("y");
+                        double yPos = objects.getJSONObject(i).getDouble("y");
                         Gdx.app.log(TAG, "Player Located:" + id);
-                        level.addOtherPlayer(id, username, null, (float) xPos, (float) yPos); // TODO
+                        level.addOtherPlayer(id, (float) xPos, (float) yPos); // TODO
                     }
-                } catch (JSONException e){
+                } catch (JSONException e) {
                     Gdx.app.log(TAG, "Error Getting New Player ID");
                 }
             }
         });
 
         // when the server sends you whole game arrow state
-        socket.on("getArrows", new Emitter.Listener(){
+        socket.on("getArrows", new Emitter.Listener() {
             @Override
             public void call(Object... args) {
 
@@ -131,7 +125,7 @@ public class NetworkController {
         });
 
         // when someone else fires an arrow
-        socket.on("arrowFired", new Emitter.Listener(){
+        socket.on("arrowFired", new Emitter.Listener() {
             @Override
             public void call(Object... args) {
 
@@ -139,12 +133,37 @@ public class NetworkController {
         });
 
         // when someone else changes their position
-        socket.on("positionUpdated", new Emitter.Listener(){
+        socket.on("positionUpdated", new Emitter.Listener() {
             @Override
             public void call(Object... args) {
+                JSONObject data = (JSONObject) args[0];
+                try {
 
+                    String id = data.getString("id");
+                    double xPos =  data.getDouble("x");
+                    double yPos =  data.getDouble("y");
+                    level.updatePlayer(id, (float) xPos, (float) yPos);
+                    Gdx.app.log(TAG, "Recieved update" + xPos +" " + yPos);
+                } catch (JSONException e) {
+                    Gdx.app.log(TAG, "Error Getting New Player ID");
+                }
             }
         });
+    }
+
+    public void updateServer(float xPos, float yPos) {
+        JSONObject data = new JSONObject();
+        try {
+            data.put("id", uniqueSocketID);
+            data.put("x", xPos);
+            data.put("y", yPos);
+            socket.emit("positionUpdate", data);
+            Gdx.app.log(TAG, "Sent update");
+        } catch (JSONException e) {
+            Gdx.app.log(TAG, "Error Getting New Player ID");
+        }
+
+
     }
 }
 

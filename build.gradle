@@ -99,6 +99,7 @@ project(":html") {
 
     dependencies {
         compile project(":core")
+        compile group: 'org.json', name: 'json', version: '1.5-20090211'
         compile "com.badlogicgames.gdx:gdx-backend-gwt:$gdxVersion"
         compile "com.badlogicgames.gdx:gdx:$gdxVersion:sources"
         compile "com.badlogicgames.gdx:gdx-backend-gwt:$gdxVersion:sources"

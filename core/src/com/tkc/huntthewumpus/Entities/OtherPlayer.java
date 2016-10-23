@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import com.tkc.huntthewumpus.Utility;
 
 /**
  * Created by connorrunyan on 9/28/2016.
@@ -18,6 +19,7 @@ public class OtherPlayer implements Entity {
     String uniqueSocketID;
 
     // graphical info
+    Texture texture;
     Sprite playerSprite;
 
     // physics info
@@ -44,15 +46,14 @@ public class OtherPlayer implements Entity {
         playerLocation = new Vector2(startX, startY);
     }
 
-    public OtherPlayer(String ID, float startX, float startY) {
+    public OtherPlayer(String ID, float startX, float startY, Utility util) {
         // graphics set up
         // TODO make this work through Utility's asset manager
         this.uniqueSocketID = ID;
-        Texture tempTexture;
-            // default green
-            tempTexture = new Texture("hunter_green.png");
+        // default green
+        texture = util.getHunter_Red();
 
-        playerSprite = new Sprite(tempTexture);
+        playerSprite = new Sprite(texture);
         playerLocation = new Vector2(startX, startY);
     }
 
@@ -75,6 +76,7 @@ public class OtherPlayer implements Entity {
     public void setPosition(float x, float y){
         playerLocation.x = x;
         playerLocation.y = y;
+        playerSprite.setPosition(x, y);
     }
 
     // Down here are some convenience methods used elsewhere
